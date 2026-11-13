@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>수억 연말 응원 광장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box} html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#b9d8ed;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;touch-action:none}
+  canvas{display:block}
+  #hud{position:fixed;inset:0;pointer-events:none;color:#173047}
+  .top{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .panel{background:#ffffffd9;border:1px solid #ffffff;border-radius:16px;padding:10px 14px;box-shadow:0 5px 20px #24445a22;backdrop-filter:blur(8px)}
+  .title{font-weight:800;font-size:15px}.hint{font-size:12px;line-height:1.5;margin-top:3px;color:#496477}
+  #status{font-size:12px;font-weight:700;white-space:nowrap}
+  #joy{position:absolute;left:22px;bottom:24px;width:124px;height:124px;border-radius:50%;background:#ffffff55;border:2px solid #ffffffb8;pointer-events:auto;touch-action:none}
+  #nub{position:absolute;left:50%;top:50%;width:52px;height:52px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;border:2px solid #b7d3e5;box-shadow:0 3px 10px #2345}
+  #looktip{position:absolute;right:18px;bottom:28px;width:130px;text-align:center;font-size:11px;color:#24445e;background:#ffffffa8;padding:9px;border-radius:12px}
+  .action{position:absolute;right:12px;pointer-events:auto;padding:10px 13px;font-size:13px;box-shadow:0 4px 14px #24445a33;touch-action:manipulation}
+  #jump{bottom:28px;right:165px;background:#2677b8} #pose{bottom:104px;right:18px;background:#b64b68}
+  #toast{position:absolute;left:50%;top:82px;transform:translateX(-50%);padding:10px 16px;border-radius:14px;background:#ffffffdf;font-size:13px;font-weight:800;opacity:0;transition:opacity .25s;white-space:nowrap}
+  #toast.show{opacity:1}
+  #wishButton{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);pointer-events:auto;background:#b94757;padding:10px 14px;font-size:13px;box-shadow:0 4px 14px #24445a33;white-space:nowrap}
+  #wishButton:disabled{opacity:.55}
+  #wishModal{position:fixed;inset:0;z-index:8;display:none;place-items:center;background:#102b3dcc;padding:18px;pointer-events:auto}
+  #wishModal.open{display:grid}
+  #wishCard{width:min(420px,100%);background:#fffdf7;border-radius:22px;padding:22px;box-shadow:0 18px 55px #102b3d66;color:#173047}
+  #wishCard h2{margin:0 0 7px;font-size:21px}
+  #wishCard p{font-size:13px;line-height:1.5;color:#587080;margin:0 0 14px}
+  #wishInput{width:100%;min-height:94px;resize:vertical;border:1px solid #c8d9df;border-radius:12px;padding:12px;font:inherit;font-size:15px;outline-color:#23866d}
+  #wishCount{font-size:11px;color:#718591;text-align:right;margin-top:5px}
+  .wishActions{display:flex;gap:9px;justify-content:flex-end;margin-top:14px}
+  .wishActions button{font-size:14px;padding:11px 16px}
+  #cancelWish{background:#e8eef1;color:#365164}
+  #wishList{margin-top:14px;max-height:120px;overflow:auto;font-size:12px;color:#496477;line-height:1.6}
+  #boardModal{position:fixed;inset:0;z-index:9;display:none;place-items:center;background:#102b3dcc;padding:18px;pointer-events:auto}
+  #boardModal.open{display:grid}
+  #boardCard{width:min(460px,100%);max-height:82vh;overflow:auto;background:#fffdf7;border-radius:22px;padding:22px;box-shadow:0 18px 55px #102b3d66;color:#173047}
+  #boardCard h2{margin:0 0 7px;font-size:21px}
+  #boardCard p{font-size:13px;color:#587080;margin:0 0 14px}
+  #boardFeed{display:flex;flex-direction:column;gap:9px;max-height:52vh;overflow:auto}
+  .cheerItem{padding:11px 13px;border-radius:13px;background:#eef6f2;border:1px solid #d8e9df;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+  .cheerItem small{display:block;color:#718591;font-size:10px;margin-top:4px}
+  #pose{min-width:132px}
+  #chatButton{position:absolute;right:12px;top:104px;pointer-events:auto;background:#416c9b;padding:10px 13px;font-size:13px}
+  #ride{top:54px;right:12px;bottom:auto;background:#8a5b2d;min-width:0;padding:10px 13px;font-size:13px}
+  #screenshotButton{position:absolute;right:12px;top:154px;pointer-events:auto;background:#5b6470;padding:10px 13px;font-size:13px}
+  #boardButton{right:12px!important;top:204px!important;bottom:auto!important;padding:10px 13px;font-size:13px}
+  #musicButton{position:absolute;right:12px;top:254px;pointer-events:auto;background:#287c70;padding:10px 13px;font-size:13px}
+  
+  #chatModal{position:fixed;inset:0;z-index:10;display:none;place-items:center;background:#102b3dcc;padding:18px;pointer-events:auto}
+  #chatModal.open{display:grid}
+  #chatCard{width:min(500px,100%);max-height:82vh;display:flex;flex-direction:column;background:#fffdf7;border-radius:22px;padding:20px;color:#173047}
+  #chatFeed{height:min(42vh,360px);overflow:auto;display:flex;flex-direction:column;gap:8px;margin:12px 0}
+  .chatItem{background:#edf4f8;border-radius:12px;padding:10px 12px;overflow-wrap:anywhere;font-size:15px}
+  .chatItem small{display:block;color:#718591;font-size:11px;margin-top:3px}
+  #chatCompose{display:flex;gap:8px}
+  #chatInput{min-width:0;flex:1;border:1px solid #c8d9df;border-radius:12px;padding:12px;font:inherit;font-size:16px}
+  body.screenshot-mode #hud,body.screenshot-mode #playerNameTag{display:none!important}
+  body.screenshot-mode{cursor:none}
+  #start{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(#d8eff4bb,#c3d9edcc);z-index:5}
+  #startbox{max-width:340px;margin:20px;padding:25px;border-radius:24px;background:#ffffffed;text-align:center;box-shadow:0 18px 55px #18354a33}
+  #start h1{margin:0 0 8px;font-size:24px;color:#17405a}#start p{font-size:14px;line-height:1.6;color:#506779}
+  button{border:0;border-radius:14px;background:#167c67;color:white;font-weight:800;font-size:16px;padding:13px 25px;cursor:pointer}
+
+  #playerNameTag{position:fixed;z-index:4;left:0;top:0;transform:translate(-50%,-100%);padding:4px 10px;border-radius:999px;background:#173047dd;color:#fff;font-size:13px;font-weight:800;white-space:nowrap;text-shadow:0 1px 2px #0006;pointer-events:none;display:none}
+  #playerNameInput{width:100%;padding:12px;border:1px solid #b9ccd5;border-radius:12px;font:inherit;font-size:16px;margin:8px 0 14px;outline-color:#23866d}
+  #runtimeError{position:fixed;left:12px;right:12px;bottom:12px;z-index:20;display:none;padding:14px 16px;border-radius:14px;background:#7d2630;color:#fff;font:13px/1.5 system-ui,sans-serif;white-space:pre-wrap;overflow-wrap:anywhere;max-height:35vh;overflow:auto;box-shadow:0 5px 24px #102b3d55}
+  @media(min-width:800px){#joy{width:140px;height:140px;left:28px;bottom:28px}#looktip{right:28px;bottom:30px}.action{right:28px}#jump{right:180px;bottom:30px}#pose{bottom:105px}}
+  @media(max-width:520px){#pose{right:12px;bottom:105px;padding:9px 11px}#jump{right:150px;bottom:24px;padding:10px 13px}#wishButton{bottom:24px;max-width:48vw;white-space:normal;font-size:12px;padding:9px 11px}#ride,#chatButton,#screenshotButton,#boardButton,#musicButton{right:10px;padding:9px 11px;font-size:12px}}
+
+  html,body,input,textarea{font-family:'Gowun Dodum','Noto Sans KR',system-ui,-apple-system,sans-serif}
+  button,h1,h2,.title,#toast,#status,#playerNameTag,#looktip{font-family:'Jua','Gowun Dodum','Noto Sans KR',system-ui,sans-serif;font-weight:400;letter-spacing:.01em}
+  .title{font-size:17px}#start h1{font-size:28px}#wishCard h2,#boardCard h2{font-size:23px}
+  button{font-size:17px}.action,#wishButton,#chatButton,#screenshotButton,#boardButton,#musicButton{font-size:14px}
+  #playerNameTag{font-size:15px}.cheerItem,.chatItem{font-size:15px}
+  #genderPick{display:flex;gap:10px;justify-content:center;margin:6px 0 4px}
+  .gbtn{flex:1;padding:11px 8px;background:#e8eef1;color:#365164;font-size:17px;border:2px solid transparent}
+  .gbtn.on{background:#167c67;color:#fff;border-color:#bfe8dc}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div class="top">
+    <div class="panel"><div class="title">🎄 수억 연말 응원 광장</div><div class="hint">제작자: 10501 강민석<br>왼쪽 조이스틱: 이동 · 오른쪽 드래그: 시점 회전 · 점프 · 루돌프 타기</div></div>
+    <div class="panel" id="status">3인칭 탐험 모드</div>
+  </div>
+  <div id="joy"><div id="nub"></div></div>
+  <div id="looktip">화면 오른쪽을<br>밀어서 둘러보세요</div>
+  <button class="action" id="jump">⬆ 점프</button><button class="action" id="pose">📸 사진 포즈</button><button class="action" id="ride">🦌 루돌프 타기</button>
+  <button id="wishButton" disabled>💬 트리에 응원 메시지 남기기</button>
+  <button class="action" id="boardButton" style="right:18px;bottom:170px;background:#287c70">📋 응원 게시판</button>
+  <button class="action" id="chatButton">💬 채팅</button>
+  <button class="action" id="screenshotButton">📷 스크린샷 모드</button><button class="action" id="musicButton">🎵 음악 켜기</button>
+  <div id="toast">포토존에 도착했어요!</div>
+</div>
+<div id="wishModal" role="dialog" aria-modal="true" aria-labelledby="wishTitle">
+  <div id="wishCard">
+    <div style="font-size:32px">✨🎄✨</div>
+    <h2 id="wishTitle">따뜻한 응원 메시지</h2>
+    <p>친구들과 방문자에게 전하고 싶은 응원을 적어보세요. 메시지가 오너먼트가 되어 트리에 걸리고 게시판에도 올라가요!</p>
+    <textarea id="wishInput" maxlength="50" placeholder="예: 오늘도 멋진 하루! 모두 행복한 크리스마스 보내세요!"></textarea>
+    <div id="wishCount">0 / 50</div>
+    <div class="wishActions"><button id="cancelWish">취소</button><button id="submitWish">응원 메시지 올리기 💚</button></div>
+    <div id="wishList"></div>
+  </div>
+</div>
+<div id="chatModal" role="dialog" aria-modal="true">
+  <div id="chatCard">
+    <h2 style="margin:0">💬 겨울 학교 채팅</h2>
+    <p id="chatNote" style="font-size:12px;color:#718591;margin:6px 0 0">현재는 같은 브라우저의 다른 탭과 메시지를 주고받는 미리보기 채팅입니다.</p>
+    <div id="chatFeed"></div>
+    <div id="chatCompose"><input id="chatInput" maxlength="180" placeholder="메시지를 입력하세요"><button id="sendChat">전송</button></div>
+    <div class="wishActions"><button id="closeChat">닫기</button></div>
+  </div>
+</div>
+<div id="boardModal" role="dialog" aria-modal="true" aria-labelledby="boardTitle">
+  <div id="boardCard">
+    <div style="font-size:30px">💌❄️</div>
+    <h2 id="boardTitle">겨울 학교 응원 게시판</h2>
+    <p>방문자들이 남긴 따뜻한 메시지를 모아봤어요.</p>
+    <div id="boardFeed"></div>
+    <div class="wishActions"><button id="closeBoard">닫기</button></div>
+  </div>
+</div>
+<div id="start"><div id="startbox"><div style="font-size:46px">🎄❄️🏫</div><h1>수억 연말 응원 광장</h1><p>제작자: 10501 강민석<br>캐릭터를 고르고 플레이어 이름을 입력해 주세요.<br>이름은 캐릭터 머리 위에 표시됩니다.</p><div id="genderPick"><button type="button" class="gbtn on" data-g="male">🧑 남학생</button><button type="button" class="gbtn" data-g="female">👧 여학생</button></div><input id="playerNameInput" maxlength="16" autocomplete="nickname" placeholder="플레이어 이름 (최대 16자)"><button id="enter">이름 정하고 월드 입장하기</button></div></div><div id="playerNameTag"></div>
+<div id="runtimeError" role="alert"></div>
+<script>
+(function(){
+  function showRuntimeError(message){
+    var panel=document.getElementById('runtimeError');
+    if(!panel){panel=document.createElement('div');panel.id='runtimeError';document.body.appendChild(panel)}
+    panel.style.display='block';
+    panel.textContent='실행 중 오류가 발생했습니다.\n'+String(message)+'\n\n인터넷 연결을 확인하고, 파일을 직접 열었다면 로컬 웹 서버에서 실행해 주세요.';
+  }
+  window.addEventListener('error',function(event){
+    showRuntimeError(event.message || (event.target && event.target.src) || '스크립트 또는 모듈을 불러오지 못했습니다.');
+  },true);
+  window.addEventListener('unhandledrejection',function(event){
+    var reason=event.reason;
+    showRuntimeError(reason && (reason.stack || reason.message) || reason || '처리되지 않은 비동기 오류');
+  });
+})();
+</script>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+
+// 오리지널 겨울 마을 BGM: 오르골 같은 포근한 소리로 직접 작곡한 곡입니다. 시작 후 켜지며, 버튼으로 끌 수 있어요.
+let carolContext=null, carolTimer=null, carolEnabled=false, bgmStep=0, bgmNext=0, bgmOut=null;
+const musicButton=document.getElementById('musicButton');
+const EIGHTH=.4, NOTE_IDX={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const noteFreq=n=>440*Math.pow(2,(12*(parseInt(n[1])+1)+NOTE_IDX[n[0]]-69)/12);
+const CHORDS={C:['C3','G3','E4'],Am:['A2','E3','C4'],F:['F2','C3','A3'],G:['G2','D3','B3'],Em:['E2','B2','G3'],Dm:['D3','A3','F4']};
+const BGM_BARS=[
+ ['C','G4 - C5 - E5 - D5 C5'],['Am','A4 - C5 - E5 - . .'],['F','F5 - E5 - C5 - A4 -'],['G','B4 - D5 - G4 - . .'],
+ ['C','G4 - C5 - E5 - G5 -'],['Em','E5 - D5 - B4 - G4 -'],['F','A4 - C5 - F5 - E5 D5'],['G','D5 - B4 - C5 - . .'],
+ ['Am','C5 - E5 - A5 - G5 E5'],['F','F5 - A5 - G5 - F5 E5'],['C','E5 - G5 - E5 - D5 C5'],['G','D5 - G5 - F5 D5 B4 -'],
+ ['Am','E5 - C5 - A4 - C5 E5'],['Dm','D5 - F5 - A5 - F5 D5'],['G','G5 - F5 - D5 - B4 -'],['C','C5 - E5 - C5 - - -']
+];
+const bgmMelody=[], bgmChord=[];
+BGM_BARS.forEach(([chord,line],bar)=>{
+  let last=null;
+  line.split(' ').forEach((tok,i)=>{
+    const step=bar*8+i;
+    if(tok==='-'){if(last)last.len++}
+    else if(tok==='.'){last=null}
+    else{last={freq:noteFreq(tok),len:1};bgmMelody[step]=last}
+  });
+  const [lo,mid,hi]=CHORDS[chord].map(noteFreq);
+  bgmChord[bar*8]={freq:lo,len:4,vol:.05,low:true};bgmChord[bar*8+2]={freq:mid,len:2,vol:.028};
+  bgmChord[bar*8+4]={freq:hi,len:2,vol:.03};bgmChord[bar*8+6]={freq:mid,len:2,vol:.024};
+});
+function pluck(freq,t,dur,vol,low){
+  const ctx=carolContext,end=t+Math.min(dur+(low?.5:.9),2.4);
+  const g=ctx.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0001,end);
+  const o1=ctx.createOscillator();o1.type=low?'triangle':'sine';o1.frequency.value=freq;o1.connect(g);o1.start(t);o1.stop(end+.05);
+  if(!low){const g2=ctx.createGain();g2.gain.setValueAtTime(vol*.28,t);g2.gain.exponentialRampToValueAtTime(.0001,t+.35);const o2=ctx.createOscillator();o2.type='sine';o2.frequency.value=freq*3;o2.connect(g2);g2.connect(bgmOut);o2.start(t);o2.stop(t+.4)}
+  g.connect(bgmOut);
+}
+function scheduleBgm(){
+  if(!carolEnabled||!carolContext)return;
+  const ctx=carolContext;
+  while(bgmNext<ctx.currentTime+.6){
+    const s=bgmStep%128,m=bgmMelody[s],c=bgmChord[s];
+    if(m)pluck(m.freq,bgmNext,m.len*EIGHTH,.075,false);
+    if(c)pluck(c.freq,bgmNext,c.len*EIGHTH,c.vol,!!c.low);
+    bgmNext+=EIGHTH;bgmStep++;
+  }
+}
+async function startCarol(){
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx)return;
+  if(!carolContext){
+    carolContext=new AudioCtx();
+    bgmOut=carolContext.createGain();bgmOut.gain.value=.9;bgmOut.connect(carolContext.destination);
+    const delay=carolContext.createDelay(1);delay.delayTime.value=.27;
+    const fb=carolContext.createGain();fb.gain.value=.32;const lp=carolContext.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2600;
+    bgmOut.connect(delay);delay.connect(lp);lp.connect(fb);fb.connect(delay);lp.connect(carolContext.destination);
+  }
+  await carolContext.resume();
+  if(carolEnabled)return;
+  carolEnabled=true;musicButton.textContent='🔇 음악 끄기';
+  bgmNext=carolContext.currentTime+.15;bgmStep=0;scheduleBgm();carolTimer=setInterval(scheduleBgm,120);
+}
+function stopCarol(){
+  carolEnabled=false;if(carolTimer){clearInterval(carolTimer);carolTimer=null;}
+  try{speechSynthesis.cancel()}catch(e){}
+  musicButton.textContent='🎵 음악 켜기';
+}
+musicButton.addEventListener('click',()=>carolEnabled?stopCarol():startCarol());
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xb9d8ed);
+scene.fog = new THREE.Fog(0xb9d8ed, 65, 190);
+const camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, .1, 320);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace; document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xeaf7ff,0x7892a1,2.0));
+const sun=new THREE.DirectionalLight(0xfff2d9,2.1); sun.position.set(-12,24,10); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048); scene.add(sun);
+const mat=(color,roughness=.85)=>new THREE.MeshStandardMaterial({color,roughness});
+const snow=mat(0xf3f8fb), groundMat=mat(0xe5f0f5), dark=mat(0x344b5c), wall=mat(0xf1e8d7), roof=mat(0x35566b), red=mat(0xb83d42), green=mat(0x176b50), gold=mat(0xf5c84c), glass= new THREE.MeshStandardMaterial({color:0x8bc8df,roughness:.25,metalness:.1});
+function add(mesh,x,y,z){mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;scene.add(mesh);return mesh}
+function box(w,h,d,m,x,y,z){return add(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m),x,y,z)}
+function cyl(rt,rb,h,m,x,y,z,n=16){return add(new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,n),m),x,y,z)}
+// snow field
+box(480,.5,480,groundMat,0,-.3,0);
+// 학교 건물: 3층 본관 + 시계탑 + 정문 (더 크고 웅장하게)
+const brick=mat(0x9c7b63), trimTan=mat(0xd9c9ad), doorMat=mat(0x8a5b3a);
+box(48,12,14,wall,0,6,-28);
+box(48.4,1.3,14.4,brick,0,.65,-28);
+box(48.4,.5,14.4,trimTan,0,8.0,-28);
+box(50,.8,15.6,roof,0,12.4,-28);
+box(49.4,.3,15,snow,0,12.95,-28);
+for(let x=-16;x<=16;x+=8)box(1.2,2.4,1.2,dark,x,14.1,-31);
+for(let x=-21;x<=21.1;x+=4.2){
+  if(Math.abs(x)<5.5)continue;
+  for(const y of [4.6,9.2]){
+    box(2.7,3.1,.12,dark,x,y,-20.94);
+    box(2.2,2.6,.2,glass,x,y,-20.9);
+    box(.1,2.6,.24,dark,x,y,-20.88);
+    box(2.9,.2,.4,snow,x,y-1.6,-20.8);
+  }
+}
+// 중앙 시계탑
+box(10,19,10,wall,0,9.5,-25);
+box(10.4,.5,10.4,trimTan,0,19.2,-25);
+const towerRoof=add(new THREE.Mesh(new THREE.ConeGeometry(7.4,5.2,4),roof),0,22,-25);towerRoof.rotation.y=Math.PI/4;
+add(new THREE.Mesh(new THREE.SphereGeometry(.38,16,12),gold),0,24.9,-25);
+const clockFace=add(new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.7,.2,40),mat(0xfffaf0)),0,15.2,-19.95);clockFace.rotation.x=Math.PI/2;
+box(.14,1.2,.1,dark,0,15.55,-19.82);box(.9,.14,.1,dark,.4,15.2,-19.82);
+box(2.2,2.6,.2,glass,0,11.2,-19.93);
+// 정문, 지붕, 기둥, 현수막
+box(4.6,4.7,.35,roof,0,2.35,-19.85);
+box(1.7,3.9,.2,doorMat,-.9,1.95,-19.62);box(1.7,3.9,.2,doorMat,.9,1.95,-19.62);
+box(7.6,.4,3,red,0,5.1,-18.7);
+for(const sx of [-1,1])cyl(.17,.17,5,trimTan,sx*3.4,2.5,-17.4,12);
+const bannerCanvas=document.createElement('canvas');bannerCanvas.width=1024;bannerCanvas.height=160;
+const bctx=bannerCanvas.getContext('2d');bctx.fillStyle='#b83d42';bctx.fillRect(0,0,1024,160);
+bctx.strokeStyle='#f5c84c';bctx.lineWidth=10;bctx.strokeRect(8,8,1008,144);
+bctx.fillStyle='#fff7e0';bctx.font='bold 84px sans-serif';bctx.textAlign='center';bctx.textBaseline='middle';bctx.fillText('Merry Christmas',512,84);
+const bannerTex=new THREE.CanvasTexture(bannerCanvas);bannerTex.colorSpace=THREE.SRGBColorSpace;
+const banner=new THREE.Mesh(new THREE.PlaneGeometry(8.4,1.31),new THREE.MeshBasicMaterial({map:bannerTex}));banner.position.set(0,7.3,-19.93);scene.add(banner);
+// 계단과 국기 게양대
+for(let i=0;i<3;i++)box(9,.25,1.2,snow,0,.15+i*.25,-17.6-i*1.0);
+cyl(.08,.08,10,dark,15,5,-17.5,10);box(2.2,1.3,.05,red,16.15,9.2,-17.5);
+// central Christmas tree
+cyl(.32,.4,1.1,mat(0x76523a),0,.55,0);
+for(let i=0;i<5;i++){let h=3.1-i*.35;let r=2.1-i*.32;cyl(.08,r,h,green,0,1.1+i*.58,0,9)}
+const star=new THREE.Mesh(new THREE.OctahedronGeometry(.48),gold);add(star,0,4.25,0);
+for(let i=0;i<42;i++){let y=.65+Math.random()*3.2;let a=Math.random()*Math.PI*2;let r=(2.15-(y/4.3)*1.8)*(.78+Math.random()*.2);let bulb=new THREE.Mesh(new THREE.SphereGeometry(.105,10,8),[gold,mat(0xe85d62),mat(0x7bc9ed),mat(0xfff4d2)][i%4]);add(bulb,Math.cos(a)*r,y,Math.sin(a)*r)}
+// wrapped presents
+for(let i=0;i<9;i++){let a=i*Math.PI*2/9,r=2.6;let m=i%2?red:mat(0x3f8d78);box(.65,.55,.6,m,Math.cos(a)*r,.28,Math.sin(a)*r);box(.12,.58,.62,gold,Math.cos(a)*r,.28,Math.sin(a)*r)}
+// Visitor wish ornaments: locally persisted on this device/browser
+const wishButton=document.getElementById('wishButton');
+const wishModal=document.getElementById('wishModal');
+const wishInput=document.getElementById('wishInput');
+const wishCount=document.getElementById('wishCount');
+const wishList=document.getElementById('wishList');
+// ===== 자동 관리: 욕설·비하 표현 차단, 개인정보(링크·이메일·연락처) 가림, 도배 방지, 신고 3건이면 자동 숨김 =====
+const BAD_WORDS=['시발','씨발','씹','ㅅㅂ','ㅆㅂ','병신','ㅂㅅ','븅신','개새끼','개새','좆','존나','졸라게','지랄','ㅈㄹ','꺼져','죽어','죽여','뒤져','미친놈','미친년','썅','쌍놈','쌍년','엠창','느금','애미','니미','fuck','shit','bitch','asshole','dick','pussy','nigger','nigga','slut','cunt','whore','porn','성관계','야동','섹스'];
+const REPORT_LIMIT=3;
+const normText=t=>String(t==null?'':t).toLowerCase().replace(/[^a-z가-힣ㄱ-ㅎ]/g,'');
+function isBad(t){const n=normText(t);return BAD_WORDS.some(w=>n.includes(w))||/(.)\1{24,}/.test(String(t||''))}
+function maskPersonal(t){return String(t==null?'':t).replace(/(https?:\/\/|www\.)\S+/gi,'(링크 가림)').replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g,'(이메일 가림)').replace(/0\d{1,2}[-\s.]?\d{3,4}[-\s.]?\d{4}/g,'(연락처 가림)')}
+function safeText(t){const s=String(t==null?'':t);return isBad(s)?'❄️ 부적절한 표현이 가려졌어요':maskPersonal(s)}
+let wishes=[];let sharedWishSend=null;
+let isAdmin=false,adminDeleteWish=null,adminDeleteChat=null,myUid=null,reportFn=null,myReports=new Set(),reportCounts={};
+function reportButton(entry){const b=document.createElement('button');b.type='button';b.style.cssText='display:block;margin-top:6px;padding:4px 10px;font-size:11px;background:#8a95a0;border-radius:10px';
+  if(myReports.has(entry.key)){b.textContent='🚩 신고 완료';b.disabled=true;return b}
+  b.textContent='🚩 신고';b.onclick=ev=>{ev.stopPropagation();b.disabled=true;reportFn(entry).then(()=>{b.textContent='🚩 신고 완료'}).catch(()=>{b.disabled=false;b.textContent='신고 실패 · 다시 시도'})};return b}
+function addItemButtons(item,m,delFn){
+  if(!m||!m.key)return;
+  if((isAdmin||m.owner===myUid)&&delFn)item.append(deleteButton(m,delFn));
+  else if(reportFn&&myUid&&m.owner!==myUid)item.append(reportButton(m));
+}
+function deleteButton(entry,fn){const b=document.createElement('button');b.type='button';b.textContent='🗑 삭제';b.style.cssText='display:block;margin-top:6px;padding:4px 10px;font-size:11px;background:#b94757;border-radius:10px';let armed=false;b.onclick=ev=>{ev.stopPropagation();if(!armed){armed=true;b.textContent='정말 삭제? 한 번 더 누르세요';setTimeout(()=>{armed=false;if(!b.disabled)b.textContent='🗑 삭제'},3000);return}b.disabled=true;fn(entry).catch(()=>{b.disabled=false;b.textContent='삭제 실패 · 다시 시도'})};return b}
+try{wishes=JSON.parse(localStorage.getItem('winterSchoolCheers')||localStorage.getItem('winterSchoolWishes')||'[]');if(!Array.isArray(wishes))wishes=[]}catch(e){wishes=[]}
+const wishColors=[0xf5c84c,0xe85d62,0x78b9d2,0xe9edf0,0x9c83c7,0x7fc59b];
+const sparklingOrnaments=[];
+function createWishOrnament(wish,index){
+  const angle=index*2.399963, y=.9+(index%9)*.34, radius=2.05-(y/4.5)*1.15;
+  const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
+  const group=new THREE.Group();group.position.set(x,y,z);scene.add(group);
+  const color=wishColors[index%wishColors.length];
+  const ballMat=new THREE.MeshStandardMaterial({color,metalness:.35,roughness:.2,emissive:color,emissiveIntensity:.28});
+  const ball=new THREE.Mesh(new THREE.SphereGeometry(.19,16,12),ballMat);
+  ball.castShadow=true;group.add(ball);
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,.08,10),gold);cap.position.y=.19;group.add(cap);
+  const loop=new THREE.Mesh(new THREE.TorusGeometry(.055,.012,6,12),gold);loop.position.y=.27;group.add(loop);
+  // A tiny readable wish tag; drawing user text onto a canvas avoids HTML injection.
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#fffaf0';ctx.fillRect(0,0,512,128);
+  ctx.strokeStyle='#d4ad52';ctx.lineWidth=8;ctx.strokeRect(5,5,502,118);
+  ctx.fillStyle='#263f53';ctx.font='bold 30px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  let label=String(safeText(wish)).slice(0,26);ctx.fillText(label,256,64,470);
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+  const tag=new THREE.Mesh(new THREE.PlaneGeometry(.95,.24),new THREE.MeshBasicMaterial({map:texture,transparent:true,side:THREE.DoubleSide}));
+  tag.position.set(0,-.31,.02);group.add(tag);
+  // Tiny four-point glitter stars orbit the ornament and twinkle independently
+  const glitter=[];
+  for(let k=0;k<4;k++){
+    const sparkle=new THREE.Mesh(new THREE.OctahedronGeometry(.075),new THREE.MeshBasicMaterial({color:0xfff4b0,transparent:true,opacity:.95}));
+    const a=k*Math.PI/2;
+    sparkle.position.set(Math.cos(a)*.29,Math.sin(a)*.29,.04);
+    group.add(sparkle);glitter.push(sparkle);
+  }
+  group.userData.wish=wish;
+  group.userData.ballMaterial=ballMat;
+  group.userData.glitter=glitter;
+  group.rotation.y=-Math.atan2(x,z);
+  sparklingOrnaments.push(group);
+  return group;
+}
+const boardFeed=document.getElementById('boardFeed');
+function renderBoard(){
+  boardFeed.replaceChildren();
+  if(!wishes.length){const empty=document.createElement('div');empty.className='cheerItem';empty.textContent='아직 등록된 응원 메시지가 없어요. 첫 메시지를 남겨주세요!';boardFeed.appendChild(empty);return}
+  wishes.slice().reverse().forEach((entry,index)=>{
+    const message=typeof entry==='string'?{text:entry,name:'이전 방문자'}:entry;
+    const item=document.createElement('div');item.className='cheerItem';
+    const body=document.createElement('div');body.textContent=safeText(message.text||'');
+    const meta=document.createElement('small');meta.textContent=`✍️ ${safeText(message.name||'익명')} · 응원 ${wishes.length-index}`+(isAdmin&&message.reports?` · 🚩 ${message.reports}`:'');
+    item.append(body,meta);addItemButtons(item,message,adminDeleteWish);boardFeed.appendChild(item);
+  });
+}
+const ornamentByKey=new Map();let ornamentCounter=0;
+function clearAllOrnaments(){ornamentByKey.forEach(g=>{scene.remove(g);const i=sparklingOrnaments.indexOf(g);if(i>=0)sparklingOrnaments.splice(i,1)});ornamentByKey.clear();ornamentCounter=0}
+function renderWishes(){
+  wishes.slice(0,60).forEach((w,i)=>{ornamentByKey.set('local-'+i,createWishOrnament(String(typeof w==='string'?w:(w.text||'')),i));ornamentCounter=i+1});
+  wishList.textContent=wishes.length?`응원 메시지 ${wishes.length}개가 게시판에 등록되어 있어요.`:'아직 응원 메시지가 없어요!';
+  renderBoard();
+}
+
+renderWishes();
+wishInput.addEventListener('input',()=>wishCount.textContent=`${wishInput.value.length} / 50`);
+const boardModal=document.getElementById('boardModal');
+document.getElementById('boardButton').addEventListener('click',()=>{renderBoard();boardModal.classList.add('open')});
+document.getElementById('closeBoard').addEventListener('click',()=>boardModal.classList.remove('open'));
+boardModal.addEventListener('click',e=>{if(e.target===boardModal)boardModal.classList.remove('open')});
+// Lightweight same-browser chat preview. Cross-device chat requires a shared realtime backend.
+const chatModal=document.getElementById('chatModal'), chatFeed=document.getElementById('chatFeed');
+const chatInput=document.getElementById('chatInput');
+let chatMessages=[];
+try{chatMessages=JSON.parse(localStorage.getItem('winterSchoolChat')||'[]');if(!Array.isArray(chatMessages))chatMessages=[]}catch(e){chatMessages=[]}
+const chatChannel=('BroadcastChannel' in window)?new BroadcastChannel('winter-school-chat'):null;
+function renderChat(){
+  chatFeed.replaceChildren();
+  chatMessages.slice(-80).forEach(m=>{
+    const item=document.createElement('div');item.className='chatItem';
+    const body=document.createElement('div');body.textContent=safeText(m.text);
+    const meta=document.createElement('small');meta.textContent=`${safeText(m.name)} · ${m.time}`+(isAdmin&&m.reports?` · 🚩 ${m.reports}`:'');
+    item.append(body,meta);addItemButtons(item,m,adminDeleteChat);chatFeed.appendChild(item);
+  });chatFeed.scrollTop=chatFeed.scrollHeight;
+}
+let sharedChatSend=null;
+function addChatMessage(m,broadcast){if(!m||!m.text)return;if(broadcast&&sharedChatSend){sharedChatSend(m);return}chatMessages.push(m);chatMessages=chatMessages.slice(-80);try{localStorage.setItem('winterSchoolChat',JSON.stringify(chatMessages))}catch(e){}renderChat();if(broadcast&&chatChannel)chatChannel.postMessage(m)}
+if(chatChannel)chatChannel.onmessage=e=>{if(e.data)addChatMessage(e.data,false)};
+document.getElementById('chatButton').addEventListener('click',()=>{renderChat();chatModal.classList.add('open')});
+document.getElementById('closeChat').addEventListener('click',()=>chatModal.classList.remove('open'));
+chatModal.addEventListener('click',e=>{if(e.target===chatModal)chatModal.classList.remove('open')});
+let lastChatAt=0,lastChatText='';
+function chatWarn(msg){const n=document.getElementById('chatNote');if(!n)return;const old=n.dataset.old||n.textContent;n.dataset.old=old;n.textContent=msg;n.style.color='#b94757';clearTimeout(chatWarn.t);chatWarn.t=setTimeout(()=>{n.textContent=old;n.style.color='#718591'},3500)}
+function sendChat(){let value=chatInput.value.trim();if(!value)return;
+  const nowMs=Date.now();
+  if(nowMs-lastChatAt<1200){chatWarn('너무 빨리 보내고 있어요. 잠시 후에 다시 보내 주세요.');return}
+  if(isBad(value)){chatWarn('부적절한 표현이 있어서 보낼 수 없어요. 따뜻한 말로 다시 써 주세요 💚');return}
+  if(value===lastChatText){chatWarn('같은 메시지를 연속으로 보낼 수 없어요.');return}
+  value=maskPersonal(value);lastChatAt=nowMs;lastChatText=value;addChatMessage({name:(playerNameInput.value.trim()||'익명').slice(0,16),text:value,time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})},true);chatInput.value=''}
+document.getElementById('sendChat').addEventListener('click',sendChat);
+chatInput.addEventListener('keydown',e=>{if(e.key==='Enter')sendChat()});
+window.addEventListener('storage',e=>{if(e.key==='winterSchoolChat'){try{chatMessages=JSON.parse(e.newValue||'[]');renderChat()}catch(err){}}});
+wishButton.addEventListener('click',()=>{wishModal.classList.add('open');wishInput.focus()});
+document.getElementById('cancelWish').addEventListener('click',()=>wishModal.classList.remove('open'));
+wishModal.addEventListener('click',e=>{if(e.target===wishModal)wishModal.classList.remove('open')});
+document.getElementById('submitWish').addEventListener('click',()=>{
+  let wish=wishInput.value.trim();
+  if(!wish){wishInput.focus();return}
+  if(isBad(wish)){wishList.textContent='부적절한 표현이 있어서 올릴 수 없어요. 따뜻한 말로 다시 써 주세요 💚';return}
+  wish=maskPersonal(wish);
+  if(wishes.length>=60){wishList.textContent='트리에는 응원 메시지를 최대 60개까지 걸 수 있어요.';return}
+  const author=(playerNameInput.value.trim()||'익명 방문자').slice(0,16);
+  if(sharedWishSend){
+    sharedWishSend({name:author,text:wish}).then(()=>{
+      wishInput.value='';wishCount.textContent='0 / 50';
+      wishList.textContent='응원 메시지가 트리에 걸리고 게시판에 등록됐어요! 💚';
+      wishModal.classList.remove('open');
+      toast.textContent='💚 응원 메시지가 트리와 게시판에 등록됐어요!';
+      toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200);
+    }).catch(e=>{wishList.textContent=(e&&e.message==='limit')?'한 사람이 올릴 수 있는 응원 메시지는 20개까지예요.':'지금은 메시지를 올릴 수 없어요. 읽기만 가능한 계정이거나 연결에 문제가 있어요.'});
+    return;
+  }
+  wishes.push({name:author,text:wish});
+  try{localStorage.setItem('winterSchoolCheers',JSON.stringify(wishes))}catch(e){}
+  createWishOrnament(wish,wishes.length-1);
+  wishInput.value='';wishCount.textContent='0 / 50';
+  wishList.textContent='응원 메시지가 트리에 걸리고 게시판에 등록됐어요! 💚';renderBoard();
+  wishModal.classList.remove('open');
+  toast.textContent='💚 응원 메시지가 트리와 게시판에 등록됐어요!';
+  toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200);
+});
+// 돌길: 광장 원형 길 + 학교 정문에서 뻗는 큰길 + 동서 도로
+function makeCobbleTex(){
+  const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');
+  g.fillStyle='#b7a891';g.fillRect(0,0,128,128);
+  for(let r=0;r<4;r++)for(let q=-1;q<4;q++){const off=r%2?16:0;g.fillStyle=['#d3c5ae','#c9bba4','#d9ccb6','#c2b39c'][(r+q+4)%4];g.fillRect(q*32+off+1.5,r*32+1.5,29,29)}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
+}
+const cobbleTex=makeCobbleTex();
+const roadRects=[[0,-15,6,10],[0,50,5,78],[-45.5,24,87,4.5],[45.5,24,87,4.5]];
+roadRects.forEach(([cx,cz,w,d])=>{
+  const t=cobbleTex.clone();t.needsUpdate=true;t.repeat.set(w/4,d/4);
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,.1,d),new THREE.MeshStandardMaterial({map:t,roughness:.95}));
+  m.position.set(cx,0,cz);m.receiveShadow=true;scene.add(m);
+  const edge=mat(0xe9f1f5);
+  if(w>d){for(const e of [-1,1]){const o=new THREE.Mesh(new THREE.BoxGeometry(w,.12,.35),edge);o.position.set(cx,.01,cz+e*(d/2+.17));o.receiveShadow=true;scene.add(o)}}
+  else{for(const e of [-1,1]){const o=new THREE.Mesh(new THREE.BoxGeometry(.35,.12,d),edge);o.position.set(cx+e*(w/2+.17),.01,cz);o.receiveShadow=true;scene.add(o)}}
+});
+{
+  const t=cobbleTex.clone();t.needsUpdate=true;t.repeat.set(7,7);
+  const plaza=new THREE.Mesh(new THREE.CircleGeometry(11,72),new THREE.MeshStandardMaterial({map:t,color:0xf4ead8,roughness:.95}));
+  plaza.rotation.x=-Math.PI/2;plaza.position.y=.06;plaza.receiveShadow=true;scene.add(plaza);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(11,11.8,72),mat(0x9aa4aa));ring.rotation.x=-Math.PI/2;ring.position.y=.07;ring.receiveShadow=true;scene.add(ring);
+}
+// 나무를 길·광장·학교 위에는 심지 않기 위한 판정
+function blockedForTree(x,z){
+  if(Math.hypot(x,z)<13)return true;
+  if(Math.abs(x)<27&&z<-17&&z>-42)return true;
+  for(const [cx,cz,w,d] of roadRects)if(Math.abs(x-cx)<w/2+1.8&&Math.abs(z-cz)<d/2+1.8)return true;
+  return false;
+}
+// paths and lamps
+for(let z=-8;z<22;z+=9){cyl(.12,.16,3,dark,-5,1.5,z);let l=new THREE.Mesh(new THREE.SphereGeometry(.25,12,10),new THREE.MeshBasicMaterial({color:0xffe6a6}));add(l,-5,3.1,z)}
+// Christmas photo zone: raised platform, decorative frame, lights and sign
+const photoPlatform=box(6.8,.22,4.8,mat(0xd8e9f1),11,.03,1.5);
+box(6.3,.12,4.4,mat(0x8bb7c7),11,.19,1.5);
+// backdrop and wooden-style frame facing the plaza
+box(5.8,4.1,.22,mat(0x214e55),11,2.25,-.72);
+box(.28,4.8,.34,gold,8.15,2.55,1.05); box(.28,4.8,.34,gold,13.85,2.55,1.05);
+box(6.0,.32,.34,gold,11,4.88,1.05);
+box(5.35,.12,.42,mat(0xffe7a0),11,4.58,1.05);
+// hanging ornaments and garland
+for(let i=0;i<9;i++){let x=8.55+i*.61;let y=4.42-Math.sin(i/8*Math.PI)*.42;cyl(.035,.035,.38,green,x,y,1.02,8);let orb=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),[red,gold,mat(0x8ed5e4)][i%3]);add(orb,x,y-.22,1.02)}
+// photo-zone lettering as a clear sign panel
+box(3.9,.72,.18,mat(0xf7f1df),11,3.72,.88);
+// tiny snowman props at both sides
+for(let side of [-1,1]){let x=11+side*3.0;cyl(.48,.58,.85,snow,x,.58,1.4,16);let head=new THREE.Mesh(new THREE.SphereGeometry(.34,16,12),snow);add(head,x,1.25,1.4);let hat=box(.72,.16,.55,red,x,1.58,1.4);box(.48,.34,.42,dark,x,1.78,1.4);for(let e of [-1,1]){let eye=new THREE.Mesh(new THREE.SphereGeometry(.045,8,8),dark);add(eye,x+e*.12,1.3,1.7)}let nose=new THREE.Mesh(new THREE.ConeGeometry(.09,.38,8),red);nose.rotation.x=Math.PI/2;add(nose,x,1.2,1.78)}
+// decorative starbursts around the photo frame
+for(let i=0;i<7;i++){let x=8.8+i*.73;let starlet=new THREE.Mesh(new THREE.OctahedronGeometry(.16),gold);add(starlet,x,3.1+Math.sin(i)*.35,.82)}
+
+// Extra snowmen placed around the school grounds.
+function makeSnowman(x,z,scale=1){
+  const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);scene.add(g);
+  const part=(geo,material,px,py,pz)=>{const o=new THREE.Mesh(geo,material);o.position.set(px,py,pz);o.castShadow=true;o.receiveShadow=true;g.add(o);return o;};
+  part(new THREE.SphereGeometry(.62,18,14),snow,0,.65,0);
+  part(new THREE.SphereGeometry(.43,18,14),snow,0,1.48,0);
+  part(new THREE.SphereGeometry(.29,18,14),snow,0,2.08,0);
+  for(const side of [-1,1])part(new THREE.SphereGeometry(.055,10,8),dark,side*.11,2.13,.255);
+  const nose=part(new THREE.ConeGeometry(.09,.42,8),red,0,2.02,.39);nose.rotation.x=Math.PI/2;
+  for(let i=0;i<3;i++)part(new THREE.SphereGeometry(.065,10,8),dark,0,1.55-i*.28,.405);
+  part(new THREE.CylinderGeometry(.24,.27,.12,12),red,0,2.38,0);
+  part(new THREE.CylinderGeometry(.16,.16,.42,12),dark,0,2.63,0);
+  part(new THREE.SphereGeometry(.1,10,8),snow,0,2.87,0);
+  for(const side of [-1,1]){const arm=part(new THREE.CylinderGeometry(.045,.06,.9,8),dark,side*.72,1.35,0);arm.rotation.z=side*.75;}
+}
+makeSnowman(-13,8,1.05);makeSnowman(18,-12,.9);makeSnowman(-39,-8,1.15);makeSnowman(42,12,1.1);
+
+// snowy pine trees around world
+for(let i=0;i<64;i++){let a=i*Math.PI*2/64,r=29+(i%4)*3,x=Math.cos(a)*r,z=Math.sin(a)*r-5;if(blockedForTree(x,z))continue;cyl(.22,.3,1.5,mat(0x79583f),x,.75,z);for(let j=0;j<3;j++)cyl(.05,1.2-j*.22,2.1,mat(0x477a70),x,1.8+j*.9,z,8)}
+// Extra woodland clusters around the outer grounds, leaving the central plaza open
+const forestTrunk=mat(0x76523b), forestGreen=[mat(0x356c5a),mat(0x477f6c),mat(0x2f6255)];
+for(let i=0;i<112;i++){
+  const a=i*2.399963, r=43+(i%8)*5;
+  const x=Math.cos(a)*r, z=Math.sin(a)*r-4;
+  if(Math.hypot(x,z)<39||blockedForTree(x,z)) continue;
+  cyl(.2,.28,1.6,forestTrunk,x,.8,z,10);
+  for(let j=0;j<4;j++) cyl(.035,1.35-j*.2,2.25,forestGreen[(i+j)%3],x,1.65+j*.82,z,9);
+  if(i%3===0){const drift=new THREE.Mesh(new THREE.SphereGeometry(.5,8,6),snow);add(drift,x,4.7,z).scale.set(1.5,.35,1.2)}
+}
+// 빈틈 없는 연속 콘크리트 담장
+const fenceLimit=94, concrete=mat(0x89949a), concreteTrim=mat(0xb8c1c5);
+const wallHeight=3.1, wallThickness=1.15, wallSpan=fenceLimit*2+wallThickness;
+for(const sgn of [-1,1]){
+  box(wallSpan,wallHeight,wallThickness,concrete,0,wallHeight/2,sgn*fenceLimit);
+  box(wallThickness,wallHeight,wallSpan,concrete,sgn*fenceLimit,wallHeight/2,0);
+  box(wallSpan+.2,.24,wallThickness+.14,concreteTrim,0,wallHeight+.12,sgn*fenceLimit);
+  box(wallThickness+.14,.24,wallSpan+.2,concreteTrim,sgn*fenceLimit,wallHeight+.12,0);
+}
+for(let t=-fenceLimit;t<=fenceLimit;t+=17.4){
+  for(const sgn of [-1,1]){
+    box(1.7,3.9,1.7,concreteTrim,t,1.95,sgn*fenceLimit);
+    box(1.7,3.9,1.7,concreteTrim,sgn*fenceLimit,1.95,t);
+  }
+}
+// 월드 바깥의 2D 배경: 눈 덮인 산과 마을 (둘러싼 원통 벽에 그린 그림)
+(function(){
+  const W=4096,H=384,TAU=Math.PI*2,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+  function mountains(base,amp,ks,phs,color,snowLine,cap){
+    const hs=[];for(let x=0;x<=W;x+=8){let v=0;ks.forEach((k,i)=>{v+=[.55,.3,.15][i]*(1-Math.abs(Math.sin(Math.PI*k*x/W+phs[i])))});hs.push([x,H-(base+amp*v)])}
+    g.beginPath();g.moveTo(0,H);hs.forEach(([x,y])=>g.lineTo(x,y));g.lineTo(W,H);g.closePath();g.fillStyle=color;g.fill();
+    if(!cap)return;
+    g.save();g.clip();g.fillStyle='#f7fbfd';g.beginPath();g.moveTo(0,0);g.lineTo(W,0);
+    for(let x=W;x>=0;x-=8)g.lineTo(x,H-snowLine+14*Math.sin(TAU*131*x/W)+9*Math.sin(TAU*53*x/W+1));
+    g.closePath();g.fill();g.restore();
+  }
+  mountains(40,250,[7,13,29],[.4,1.1,2.2],'#a9bfd8',200,true);
+  mountains(30,180,[9,19,41],[1.7,.3,2.9],'#8aa6c6',140,true);
+  mountains(20,80,[11,23,47],[2.4,.9,.2],'#dbe8f0',0,false);
+  function house(x,w,h,wc,rc){
+    const y0=H-22,top=y0-h;g.fillStyle=wc;g.fillRect(x,top,w,h);
+    g.fillStyle=rc;g.beginPath();g.moveTo(x-8,top);g.lineTo(x+w/2,top-w*.38);g.lineTo(x+w+8,top);g.closePath();g.fill();
+    g.fillStyle='#f4f9fb';g.beginPath();g.moveTo(x-8,top);g.lineTo(x+w/2,top-w*.38);g.lineTo(x+w+8,top);g.lineTo(x+w+3,top-3);g.lineTo(x+w/2,top-w*.38+7);g.lineTo(x-3,top-3);g.closePath();g.fill();
+    g.fillStyle='#ffd77a';for(let wy=top+12;wy<y0-16;wy+=24)for(let wx=x+9;wx<x+w-14;wx+=22)g.fillRect(wx,wy,11,13);
+  }
+  function church(x){
+    house(x,70,64,'#e9dcc6','#6b4a3a');
+    g.fillStyle='#e9dcc6';g.fillRect(x+22,H-22-150,26,100);
+    g.fillStyle='#6b4a3a';g.beginPath();g.moveTo(x+18,H-22-150);g.lineTo(x+35,H-22-215);g.lineTo(x+52,H-22-150);g.closePath();g.fill();
+    g.fillStyle='#ffd77a';g.fillRect(x+30,H-22-135,10,18);
+  }
+  function block(x,w,h){
+    g.fillStyle='#c9bfae';g.fillRect(x,H-22-h,w,h);g.fillStyle='#e8f1f5';g.fillRect(x-3,H-22-h-6,w+6,8);
+    g.fillStyle='#ffd77a';for(let wy=H-22-h+14;wy<H-22-20;wy+=26)for(let wx=x+10;wx<x+w-14;wx+=22)if(rnd()>.25)g.fillRect(wx,wy,11,14);
+  }
+  const wc=['#e8d9c3','#d9c3a8','#efe3d0','#cfd8de','#e3c9c0'],rc=['#b8493f','#4f6f8a','#6b4a3a','#7a4f6d','#3f6b5a'];
+  for(let x=150,i=0;x<W-300;x+=150+rnd()*130,i++){
+    const m=i%9;
+    if(m===4)church(x);else if(m===7)block(x,90,150+rnd()*60);
+    else house(x,48+rnd()*34,38+rnd()*34,wc[i%5],rc[(i*2)%5]);
+  }
+  for(let x=0;x<W;x+=15){const h=26+rnd()*28;g.fillStyle=['#2f5f55','#3c6b61','#2a5249'][Math.floor(rnd()*3)];g.beginPath();g.moveTo(x-12,H-6);g.lineTo(x+3,H-6-h);g.lineTo(x+18,H-6);g.closePath();g.fill()}
+  g.fillStyle='#eef5f8';g.fillRect(0,H-8,W,8);
+  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+  const ring=new THREE.Mesh(new THREE.CylinderGeometry(200,200,118,128,1,true),new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.BackSide,fog:false,depthWrite:false}));
+  ring.position.y=58.4;ring.renderOrder=-1;scene.add(ring);
+})();
+// Gingerbread houses removed as requested.
+// Santa's sleigh makes a fly-by every three minutes after the world starts.
+const santaGroup=new THREE.Group();scene.add(santaGroup);santaGroup.visible=false;
+const santaRed=mat(0xb82f38), santaWhite=mat(0xf6f1e8), santaSkin=mat(0xf0c49e), sleighGold=mat(0xd8a43c);
+function santaPart(g,m,x,y,z){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;santaGroup.add(o);return o;}
+santaPart(new THREE.BoxGeometry(1.5,.35,2.2),santaRed,0,0,0);
+santaPart(new THREE.BoxGeometry(1.62,.16,2.25),sleighGold,0,-.2,0);
+for(const side of [-1,1]){const runner=santaPart(new THREE.TorusGeometry(.55,.055,8,24,Math.PI),sleighGold,side*.58,-.38,-.1);runner.rotation.z=Math.PI;}
+santaPart(new THREE.CapsuleGeometry(.38,.48,5,10),santaRed,0,.62,.1);
+santaPart(new THREE.SphereGeometry(.3,16,12),santaSkin,0,1.25,.28);
+santaPart(new THREE.SphereGeometry(.32,16,12),santaWhite,0,1.08,.48);
+santaPart(new THREE.ConeGeometry(.25,.62,12),santaRed,0,1.65,.22);
+santaPart(new THREE.SphereGeometry(.12,12,10),santaWhite,0,1.98,.22);
+santaPart(new THREE.SphereGeometry(.1,12,10),santaWhite,0,1.25,.55);
+santaGroup.visible=false;
+const fallingGifts=[], fireworks=[];
+let lastShout=0;
+function shoutMerry(){
+  const now=performance.now();if(!carolEnabled||now-lastShout<4500)return;lastShout=now;
+  try{
+    if(!('speechSynthesis' in window))return;
+    const u=new SpeechSynthesisUtterance('메리 크리스마스!');u.lang='ko-KR';u.pitch=1.35;u.rate=.95;u.volume=1;
+    const v=(speechSynthesis.getVoices()||[]).find(v=>v.lang&&v.lang.toLowerCase().startsWith('ko'));if(v)u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function dropSantaGift(x,z){shoutMerry();
+  const g=new THREE.Group();const wrap=new THREE.Mesh(new THREE.BoxGeometry(.62,.52,.62),[red,green,mat(0x426fa5)][fallingGifts.length%3]);g.add(wrap);
+  const ribbon=new THREE.Mesh(new THREE.BoxGeometry(.13,.56,.66),gold);g.add(ribbon);
+  const bow=new THREE.Mesh(new THREE.TorusGeometry(.13,.035,6,12),gold);bow.position.y=.3;g.add(bow);
+  g.position.set(x,16,z);scene.add(g);fallingGifts.push({group:g,vy:0,landed:false,bornAt:clock.elapsedTime});
+}
+function burstFireworks(position){
+  const colors=[0xffd34e,0xff6b78,0x79d8ff,0xb88cff,0x8fe0a6];
+  const group=new THREE.Group();group.position.copy(position);scene.add(group);
+  for(let i=0;i<34;i++){
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(.075,7,6),new THREE.MeshBasicMaterial({color:colors[i%colors.length],transparent:true}));
+    group.add(mesh);
+    const u=Math.random()*Math.PI*2,v=Math.random()*2-1,flat=Math.sqrt(1-v*v),speed=2.2+Math.random()*3.2;
+    fireworks.push({mesh,velocity:new THREE.Vector3(Math.cos(u)*flat*speed,v*speed,Math.sin(u)*flat*speed),life:1.15});
+  }
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(.35,.045,6,32),gold);ring.rotation.x=Math.PI/2;group.add(ring);
+  fireworks.push({mesh:ring,velocity:new THREE.Vector3(0,1.8,0),life:.75});
+  setTimeout(()=>scene.remove(group),1500);
+}
+let santaActive=false,santaStart=0,santaLastDrop=0,santaNextAt=60;
+// snow particles
+const flakes=new THREE.BufferGeometry(), count=1500, positions=new Float32Array(count*3);
+for(let i=0;i<count;i++){positions[i*3]=(Math.random()-.5)*170;positions[i*3+1]=Math.random()*25;positions[i*3+2]=(Math.random()-.5)*170}
+flakes.setAttribute('position',new THREE.BufferAttribute(positions,3));
+const snowPoints=new THREE.Points(flakes,new THREE.PointsMaterial({color:0xffffff,size:.12,transparent:true,opacity:.85}));scene.add(snowPoints);
+// More detailed student avatar with separate, animated limbs
+const player=new THREE.Group();scene.add(player);
+const skin=mat(0xf0c6a5), hair=mat(0x302b2a), uniform=mat(0x263f63), shirt=mat(0xf5f5ef), pants=mat(0x263449), shoes=mat(0x252b31), scarf=mat(0xb8494d), trim=mat(0xd9e2ea), iris=mat(0x342b26);
+function makePart(parent,g,m,x,y,z){let o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+// ---- soft, rounded student avatar (남학생 / 여학생) ----
+const avatarBody=new THREE.Group();avatarBody.position.y=-.2;player.add(avatarBody);
+const torso=new THREE.Group();avatarBody.add(torso);
+const head=new THREE.Group();head.position.set(0,2.35,0);avatarBody.add(head);
+const arms=[], legs=[];
+for(const side of [-1,1]){
+  const arm=new THREE.Group();arm.position.set(side*.43,1.72,0);avatarBody.add(arm);arms.push(arm);
+  const leg=new THREE.Group();leg.position.set(side*.2,1.0,0);avatarBody.add(leg);legs.push(leg);
+}
+const blushMat=new THREE.MeshStandardMaterial({color:0xff8f9c,roughness:1,transparent:true,opacity:.55});
+const mouthMat=mat(0xb3555a,.6), skirtMat=mat(0x2c3f6b,.9), shoeF=mat(0x6b3f33,.6);
+function clearGroup(g){g.remove(...g.children)}
+function sp(parent,r,m,x,y,z,sx=1,sy=1,sz=1,seg=24){const o=makePart(parent,new THREE.SphereGeometry(r,seg,Math.round(seg*.75)),m,x,y,z);o.scale.set(sx,sy,sz);return o}
+function cap(parent,r,len,m,x,y,z,sx=1,sz=1){const o=makePart(parent,new THREE.CapsuleGeometry(r,len,10,24),m,x,y,z);o.scale.set(sx,1,sz);return o}
+function buildAvatar(gender){
+  const f=gender==='female';
+  [torso,head,...arms,...legs].forEach(clearGroup);
+  hair.color.setHex(f?0x5a3a2e:0x302b2a);
+  // body
+  cap(torso,.37,.66,uniform,0,1.42,0,f?.92:1.05,f?.86:.92);
+  sp(torso,.21,shirt,0,1.66,.27,.9,1.25,.4);
+  cap(torso,.1,.12,skin,0,1.93,0);
+  if(f){
+    sp(torso,.07,red,-.09,1.72,.34,1.3,.8,.6);sp(torso,.07,red,.09,1.72,.34,1.3,.8,.6);sp(torso,.045,red,0,1.72,.37);
+    const sk=makePart(torso,new THREE.CylinderGeometry(.36,.6,.42,40),skirtMat,0,.93,0);sk.scale.z=.9;
+    const hem=makePart(torso,new THREE.TorusGeometry(.6,.022,8,48),trim,0,.73,0);hem.rotation.x=Math.PI/2;hem.scale.y=.9;
+  }else{
+    sp(torso,.2,red,0,1.56,.32,.55,1.7,.35);
+    const belt=makePart(torso,new THREE.TorusGeometry(.37,.045,10,36),trim,0,1.05,0);belt.rotation.x=Math.PI/2;belt.scale.y=.9;
+  }
+  cap(torso,.19,.28,red,0,1.43,-.33,1.5,.8);sp(torso,.1,gold,0,1.3,-.43,1.4,.8,.5);
+  const sc=makePart(torso,new THREE.TorusGeometry(.28,.075,14,36),scarf,0,1.93,0);sc.rotation.x=Math.PI/2;
+  const tail=cap(torso,.07,.34,scarf,.17,1.72,.28);tail.rotation.z=.12;
+  // arms
+  arms.forEach((arm,i)=>{const side=i?1:-1,r=f?.105:.125;
+    sp(arm,r+.015,uniform,0,0,0);
+    cap(arm,r,.4,uniform,0,-.28,0);
+    makePart(arm,new THREE.CylinderGeometry(r+.01,r+.01,.07,24),shirt,0,-.5,0);
+    sp(arm,.105,skin,0,-.6,.03,.95,1.15,.85);
+    const th=cap(arm,.032,.07,skin,side*.12,-.63,.06);th.rotation.z=side*.7;
+  });
+  // legs
+  legs.forEach(leg=>{
+    if(f){
+      sp(leg,.14,skirtMat,0,0,0);
+      cap(leg,.115,.42,skin,0,-.33,0);
+      cap(leg,.12,.26,shirt,0,-.56,0);
+      sp(leg,.17,shoeF,0,-.7,.1,.85,.55,1.5);
+    }else{
+      sp(leg,.18,pants,0,0,0);
+      cap(leg,.16,.48,pants,0,-.36,0);
+      makePart(leg,new THREE.CylinderGeometry(.165,.165,.07,24),trim,0,-.6,0);
+      sp(leg,.18,shoes,0,-.7,.1,.9,.6,1.6);
+    }
+  });
+  // head and face
+  sp(head,.39,skin,0,0,0,1,.98,.98,40);
+  for(const side of [-1,1]){
+    sp(head,.08,skin,side*.385,-.03,0,.6,1,.8,16);
+    sp(head,f?.082:.072,iris,side*.145,-.03,.355,1,1.15,.55,20);
+    sp(head,.022,shirt,side*.145+.025,.0,.39,1,1,.6,10);
+    const br=cap(head,.014,.08,hair,side*.15,.1,.35);br.rotation.z=Math.PI/2+side*.12;
+    sp(head,.07,blushMat,side*.25,-.11,.285,1,.6,.3,12);
+    if(f){const l=makePart(head,new THREE.TorusGeometry(.085,.012,6,16,Math.PI),hair,side*.145,0,.37);l.rotation.z=side*-.1}
+  }
+  sp(head,.035,skin,0,-.09,.375,1,.8,.8,12);
+  const mouth=makePart(head,new THREE.TorusGeometry(.07,.014,8,20,Math.PI),mouthMat,0,-.17,.36);mouth.rotation.z=Math.PI;
+  // hair
+  if(f){
+    makePart(head,new THREE.SphereGeometry(.425,48,28,0,Math.PI*2,0,Math.PI*.62),hair,0,.08,-.03);
+    [-.26,-.13,0,.13,.26].forEach((x,k)=>sp(head,.13,hair,x,.27-Math.abs(k-2)*.025,.28,1,.8,.7,20));
+    for(const side of [-1,1])cap(head,.1,.42,hair,side*.36,-.22,-.02);
+    cap(head,.3,.4,hair,0,-.3,-.2,1.05,.75);
+    sp(head,.06,red,.3,.27,.22,1.4,.8,.7,16);sp(head,.06,red,.38,.27,.2,1.4,.8,.7,16);
+  }else{
+    makePart(head,new THREE.SphereGeometry(.415,48,28,0,Math.PI*2,0,Math.PI*.58),hair,0,.09,-.03);
+    [-.2,0,.2].forEach((x,k)=>sp(head,.17,hair,x,.28-(k===1?-.01:.02),.27,1.1,.75,.7,20));
+    for(const side of [-1,1])sp(head,.12,hair,side*.35,.02,.05,.55,1.2,.9,16);
+  }
+}
+buildAvatar('male');
+document.querySelectorAll('#genderPick .gbtn').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('#genderPick .gbtn').forEach(b=>b.classList.toggle('on',b===btn));
+  buildAvatar(btn.dataset.g);
+}));
+player.position.set(0,0,7);
+// A friendly, rideable Rudolph. The avatar sits on the saddle while mounted.
+const rudolph=new THREE.Group();scene.add(rudolph);
+const reindeerBrown=mat(0x8b5738), reindeerLight=mat(0xc58b61), antlerMat=mat(0xead9b5), noseMat=new THREE.MeshStandardMaterial({color:0xff3038,emissive:0x8f1018,emissiveIntensity:.65});
+function deerPart(g,m,x,y,z){const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;rudolph.add(o);return o}
+const reindeerDark=mat(0x5b3a28), cream=mat(0xf3e8d4), hoofMat=mat(0x2a2220,.6);
+function limb(parent,m,p1,p2,r1,r2){const A=new THREE.Vector3(...p1),B=new THREE.Vector3(...p2);const o=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,A.distanceTo(B),12),m);o.position.copy(A).add(B).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),B.clone().sub(A).normalize());o.castShadow=true;parent.add(o);return o}
+function dsp(r,m,x,y,z,sx=1,sy=1,sz=1,seg=24){const o=deerPart(new THREE.SphereGeometry(r,seg,Math.round(seg*.7)),m,x,y,z);o.scale.set(sx,sy,sz);return o}
+// 몸통(가로로 누운 둥근 통), 하얀 배와 가슴 털
+const deerBody=deerPart(new THREE.CapsuleGeometry(.46,.9,12,28),reindeerBrown,0,1.2,0);deerBody.rotation.x=Math.PI/2;deerBody.scale.set(.95,1,.95);
+dsp(.4,cream,0,.98,0,.85,.45,1.9);
+dsp(.38,cream,0,1.22,.62,.85,1,.85);
+dsp(.09,cream,0,1.5,-.93,1,1.1,.8,16);
+// 목과 머리: 길게 위로 뻗은 목, 긴 얼굴과 주둥이
+const neck=deerPart(new THREE.CapsuleGeometry(.2,.4,10,20),reindeerBrown,0,1.72,.8);neck.rotation.x=.55;
+dsp(.2,cream,0,1.62,.98,.8,1.3,.8,20);
+dsp(.25,reindeerBrown,0,2.08,1.12,.88,1,1.1,28);
+const muzzle=deerPart(new THREE.CapsuleGeometry(.12,.22,8,16),reindeerLight,0,1.98,1.4);muzzle.rotation.x=Math.PI/2+.4;
+dsp(.105,noseMat,0,1.9,1.6,1,.95,.95,20);
+for(const side of [-1,1]){
+  dsp(.05,iris,side*.19,2.12,1.17,1,1.1,.7,14);dsp(.014,shirt,side*.19+side*.012,2.135,1.2,1,1,1,8);
+  dsp(.04,reindeerDark,side*.07,1.9,1.57,1,.7,.7,10);
+  const ear=deerPart(new THREE.ConeGeometry(.1,.34,14),reindeerBrown,side*.27,2.28,1.0);ear.rotation.z=-side*1.0;ear.rotation.x=-.2;
+  const inner=deerPart(new THREE.ConeGeometry(.06,.24,12),cream,side*.255,2.27,1.03);inner.rotation.z=-side*1.0;inner.rotation.x=-.2;
+  // 가지 달린 뿔
+  const P=[[side*.14,2.3,1.0],[side*.26,2.62,.92],[side*.36,2.95,.98],[side*.4,3.22,1.1]];
+  for(let i=0;i<3;i++)limb(rudolph,antlerMat,P[i],P[i+1],.045-i*.008,.04-i*.008);
+  limb(rudolph,antlerMat,P[1],[side*.24,2.92,1.22],.03,.02);
+  limb(rudolph,antlerMat,P[2],[side*.2,3.28,1.24],.028,.018);
+  limb(rudolph,antlerMat,P[2],[side*.58,3.2,.88],.028,.018);
+  limb(rudolph,antlerMat,P[3],[side*.32,3.5,1.16],.025,.015);
+  // 다리: 허벅지 - 무릎 - 가는 아랫다리 - 발굽
+  for(const fb of [-1,1]){
+    const hip=new THREE.Group();hip.position.set(side*.24,1.05,fb*.52);rudolph.add(hip);
+    const thigh=new THREE.Mesh(new THREE.CapsuleGeometry(fb===-1?.12:.1,.24,8,16),reindeerBrown);thigh.position.y=-.2;thigh.castShadow=true;hip.add(thigh);
+    const knee=new THREE.Mesh(new THREE.SphereGeometry(.075,14,10),reindeerBrown);knee.position.y=-.44;hip.add(knee);
+    const shin=new THREE.Mesh(new THREE.CapsuleGeometry(.058,.36,8,14),reindeerLight);shin.position.y=-.7;shin.castShadow=true;hip.add(shin);
+    const hoof=new THREE.Mesh(new THREE.CylinderGeometry(.07,.085,.1,14),hoofMat);hoof.position.set(0,-1.0,.01);hoof.castShadow=true;hip.add(hoof);
+    rudolph.userData.legs=rudolph.userData.legs||[];rudolph.userData.legs.push({pivot:hip,phase:(side===-1?0:Math.PI)+(fb===-1?0:Math.PI)});
+  }
+  // 고삐
+  limb(rudolph,gold,[side*.26,1.8,.25],[side*.24,2.02,1.25],.014,.014);
+}
+// 목걸이와 방울, 빨간 안장
+const collar=deerPart(new THREE.TorusGeometry(.22,.035,10,28),red,0,1.59,.72);collar.rotation.x=-Math.PI/2+.55;
+dsp(.06,gold,0,1.47,.88,1,1,1,14);
+dsp(.42,red,0,1.62,-.05,1.05,.24,1.15,28);
+rudolph.visible=false;
+let riding=false;
+const rideButton=document.getElementById('ride');
+function toggleRide(){
+  riding=!riding;
+  rudolph.visible=riding;
+  rideButton.textContent=riding?'🦌 루돌프 내리기':'🦌 루돌프 타기';
+  document.getElementById('status').textContent=riding?'루돌프 탑승 중':'3인칭 탐험 모드';
+  if(riding){
+    player.position.y=.98;verticalSpeed=0;grounded=true;
+    arms.forEach(a=>{a.rotation.x=-1.0;a.rotation.z=0});
+    legs.forEach(l=>{l.rotation.x=-1.05;l.rotation.z=0});
+    toast.textContent='루돌프에 올라탔어요! 방향키나 조이스틱으로 달려보세요.';
+  } else {
+    player.position.y=0;verticalSpeed=0;grounded=true;
+    arms.forEach(a=>{a.rotation.x=0;a.rotation.z=0});
+    legs.forEach(l=>{l.rotation.x=0;l.rotation.z=0});
+  }
+  toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1500);
+}
+rideButton.addEventListener('click',toggleRide);
+let yaw=0, cameraYaw=0, cameraPitch=.18, moveX=0,moveY=0, keys={};
+let verticalSpeed=0, grounded=true, walkClock=0, poseTimer=0, photoToastShown=false, poseIndex=0;
+const jumpButton=document.getElementById('jump'), poseButton=document.getElementById('pose'), toast=document.getElementById('toast');
+function jump(){if(grounded){verticalSpeed=7.2;grounded=false;toast.textContent='점프!';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),650)}}
+jumpButton.addEventListener('pointerdown',e=>{e.preventDefault();jump()});
+const poseNames=['브이 포즈 ✌️','양팔 만세 🙌','한 손 인사 👋','하트 포즈 💗','멋진 경례 🫡'];
+poseButton.addEventListener('click',()=>{
+ poseIndex=(poseIndex+1)%poseNames.length;poseTimer=2.8;
+ poseButton.textContent=`📸 ${poseNames[poseIndex]}`;
+ toast.textContent=`찰칵! ${poseNames[poseIndex]}`;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),1600);
+});
+const joy=document.getElementById('joy'), nub=document.getElementById('nub');
+let joyId=null;
+joy.addEventListener('pointerdown',e=>{joyId=e.pointerId;joy.setPointerCapture(joyId);moveJoy(e)});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===joyId)moveJoy(e)});
+function moveJoy(e){let r=joy.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2),max=43,len=Math.hypot(dx,dy);if(len>max){dx*=max/len;dy*=max/len}moveX=dx/max;moveY=dy/max;nub.style.left=`calc(50% + ${dx}px)`;nub.style.top=`calc(50% + ${dy}px)`}
+function stopJoy(e){if(e.pointerId===joyId){joyId=null;moveX=moveY=0;nub.style.left='50%';nub.style.top='50%'}}
+joy.addEventListener('pointerup',stopJoy);joy.addEventListener('pointercancel',stopJoy);
+const screenshotButton=document.getElementById('screenshotButton');
+function exitScreenshotMode(){if(document.body.classList.contains('screenshot-mode')){document.body.classList.remove('screenshot-mode');screenshotButton.textContent='📷 스크린샷 모드'}}
+screenshotButton.addEventListener('click',()=>{document.body.classList.add('screenshot-mode');screenshotButton.textContent='화면을 터치하면 UI 복귀'});
+document.addEventListener('pointerdown',e=>{if(document.body.classList.contains('screenshot-mode')){exitScreenshotMode();e.preventDefault();e.stopPropagation()}},true);
+let lookId=null,lastX=0,lastY=0;
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.clientX>innerWidth*.35){lookId=e.pointerId;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(lookId)}});
+renderer.domElement.addEventListener('pointermove',e=>{if(e.pointerId===lookId){let dx=e.clientX-lastX,dy=e.clientY-lastY;cameraYaw-=dx*.006;cameraPitch=Math.max(-.08,Math.min(.75,cameraPitch+dy*.003));lastX=e.clientX;lastY=e.clientY}});
+renderer.domElement.addEventListener('pointerup',e=>{if(e.pointerId===lookId)lookId=null});
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();jump()}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const playerNameInput=document.getElementById('playerNameInput'), playerNameTag=document.getElementById('playerNameTag');
+
+// ===== 공유 저장소(db): 모든 방문자가 같은 응원 메시지와 채팅을 봅니다. 연결이 안 되면 기존 브라우저 저장 방식으로 동작합니다. =====
+// 저장 구조: wishes/<내 id>, chat/<내 id>, reports/<내 id> 문서 하나에 내가 쓴 글·신고 목록을 보관합니다.
+// 남의 글은 수정할 수 없고, 본인 글은 본인이, 모든 글은 관리자(편집자 이상)가 삭제할 수 있어요.
+(async function connectShared(){
+  try{
+    if(!window.claude||typeof claude.use!=='function')return;
+    const db=await claude.use('db');
+    if(!db)return;
+    const user=await claude.use('user');
+    let uid=null,canWrite=null;
+    try{uid=user?await user.id():null}catch(e){}
+    try{canWrite=user?await user.can('data.write'):null}catch(e){}
+    try{isAdmin=user?await user.canEdit():false}catch(e){isAdmin=false}
+    myUid=uid;
+    const wishCol=db.collection('wishes'), chatCol=db.collection('chat'), reportCol=db.collection('reports');
+    const flatten=snap=>{const out=[];snap.docs.forEach(d=>{const v=d.data()||{};
+      const push=(it,id)=>{const key=d.id+':'+id;out.push({id,name:it.name,text:it.text,time:it.time,t:it.t||0,owner:d.id,key,reports:reportCounts[key]||0})};
+      if(Array.isArray(v.items))v.items.forEach(it=>{if(it&&it.text)push(it,it.id)});
+      else if(v.text)push(v,'legacy')});
+      out.sort((x,y)=>x.t-y.t);return out};
+    const hidden=e=>!isAdmin&&e.reports>=REPORT_LIMIT;
+    let queue=Promise.resolve();
+    const enqueue=run=>{const p=queue.then(run,run);queue=p.catch(()=>{});return p};
+    const appendOwn=(col,item,opts)=>{
+      if(!uid||canWrite===false)return Promise.reject(new Error('read-only'));
+      return enqueue(async()=>{
+        const ref=db.doc(col+'/'+uid);const cur=await ref.get();
+        const old=(cur.exists&&Array.isArray(cur.data().items))?cur.data().items:[];
+        if(opts.max&&old.length>=opts.max)throw new Error('limit');
+        await ref.set({items:[...old,item].slice(-(opts.keep||1000))});
+      });
+    };
+    const removeItem=(col,entry)=>enqueue(async()=>{
+      const ref=db.doc(col+'/'+entry.owner);
+      if(entry.id==='legacy'){await ref.delete();return}
+      const cur=await ref.get();
+      const old=(cur.exists&&Array.isArray(cur.data().items))?cur.data().items:[];
+      const next=old.filter(it=>it.id!==entry.id);
+      if(next.length)await ref.set({items:next});else await ref.delete();
+    });
+    const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    // 응원 메시지
+    let gotWishes=false,lastWishSnap=null,lastChatSnap=null;
+    const wishTimer=setTimeout(()=>{if(!gotWishes)wishList.textContent='공유 서버에 연결하는 중이에요… 잠시만 기다려 주세요.'},10000);
+    function applyWishes(){
+      if(!lastWishSnap)return;
+      if(!gotWishes){gotWishes=true;clearTimeout(wishTimer);clearAllOrnaments()}
+      const list=flatten(lastWishSnap).filter(w=>!hidden(w)).slice(0,60);
+      wishes=list;const alive=new Set(list.map(w=>w.key));
+      list.forEach(w=>{if(!ornamentByKey.has(w.key))ornamentByKey.set(w.key,createWishOrnament(String(w.text||''),ornamentCounter++))});
+      ornamentByKey.forEach((g,k)=>{if(!alive.has(k)){scene.remove(g);const i=sparklingOrnaments.indexOf(g);if(i>=0)sparklingOrnaments.splice(i,1);ornamentByKey.delete(k)}});
+      wishList.textContent=wishes.length?`응원 메시지 ${wishes.length}개가 게시판에 등록되어 있어요.`:'아직 응원 메시지가 없어요!';
+      renderBoard();
+    }
+    function applyChat(){
+      if(!lastChatSnap)return;
+      chatMessages=flatten(lastChatSnap).filter(m=>!hidden(m)).slice(-80);
+      renderChat();
+    }
+    wishCol.onSnapshot(snap=>{lastWishSnap=snap;applyWishes()},err=>{console.warn('wishes',err)});
+    chatCol.onSnapshot(snap=>{lastChatSnap=snap;applyChat()},err=>{console.warn('chat',err)});
+    reportCol.onSnapshot(snap=>{
+      const counts={};let mine=new Set();
+      snap.docs.forEach(d=>{const keys=(d.data()||{}).keys;if(!Array.isArray(keys))return;new Set(keys).forEach(k=>{counts[k]=(counts[k]||0)+1});if(d.id===uid)mine=new Set(keys)});
+      reportCounts=counts;myReports=mine;applyWishes();applyChat();
+    },err=>{console.warn('reports',err)});
+    sharedWishSend=w=>appendOwn('wishes',{id:newId(),name:String(w.name).slice(0,16),text:String(w.text).slice(0,50),t:Date.now()},{max:20});
+    adminDeleteWish=e=>removeItem('wishes',e);
+    sharedChatSend=async m=>{
+      try{await appendOwn('chat',{id:newId(),name:String(m.name).slice(0,16),text:String(m.text).slice(0,180),time:m.time,t:Date.now()},{keep:40})}
+      catch(e){chatMessages.push({name:'알림',text:'지금은 메시지를 보낼 수 없어요. (읽기 전용 또는 연결 문제)',time:''});renderChat()}
+    };
+    adminDeleteChat=e=>removeItem('chat',e);
+    if(uid&&canWrite!==false){
+      reportFn=entry=>enqueue(async()=>{
+        const ref=db.doc('reports/'+uid);const cur=await ref.get();
+        const old=(cur.exists&&Array.isArray(cur.data().keys))?cur.data().keys:[];
+        if(old.includes(entry.key))return;
+        await ref.set({keys:[...old,entry.key].slice(-300)});
+      });
+    }
+    const note=document.getElementById('chatNote');
+    if(note){note.textContent='모든 방문자가 함께 보는 공유 채팅이에요. 욕설은 자동으로 막히고, 신고가 '+REPORT_LIMIT+'건 쌓이면 자동으로 가려져요.';note.dataset.old=note.textContent}
+    renderBoard();renderChat();
+  }catch(e){console.warn('공유 저장소를 사용할 수 없어 브라우저 저장 방식으로 동작합니다.',e)}
+})();
+const clock=new THREE.Clock();
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.04);
+ const sparkleTime=clock.elapsedTime;
+ sparklingOrnaments.forEach((ornament,i)=>{
+   const pulse=0.78+0.22*Math.sin(sparkleTime*4.2+i*1.7);
+   ornament.userData.ballMaterial.emissiveIntensity=.12+pulse*.65;
+   ornament.userData.glitter.forEach((star,k)=>{
+     const phase=sparkleTime*3.4+i+k*1.57;
+     star.scale.setScalar(.55+.55*(.5+.5*Math.sin(phase)));
+     star.material.opacity=.35+.65*(.5+.5*Math.sin(phase));
+     star.rotation.x=phase;star.rotation.y=phase*.8;
+   });
+ });
+ let ix=moveX+(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
+ let iy=moveY+(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+ let len=Math.hypot(ix,iy);if(len>1){ix/=len;iy/=len}
+ let forward=new THREE.Vector3(-Math.sin(cameraYaw),0,-Math.cos(cameraYaw));
+ let right=new THREE.Vector3(Math.cos(cameraYaw),0,-Math.sin(cameraYaw));
+ let dir=forward.multiplyScalar(-iy).add(right.multiplyScalar(ix));
+ let moving=dir.lengthSq()>.001;
+ if(moving){dir.normalize();player.position.addScaledVector(dir,dt*(riding?24.6:4.3));yaw=Math.atan2(dir.x,dir.z);player.rotation.y=yaw;walkClock+=dt*(riding?13:9)}
+ if(riding){rudolph.position.set(player.position.x,0,player.position.z);rudolph.rotation.y=yaw;rudolph.position.y=Math.abs(Math.sin(clock.elapsedTime*8))*.03;}
+ else {rudolph.position.set(player.position.x,0,player.position.z)}
+ // jump physics
+ if(!riding&&!grounded){verticalSpeed-=18*dt;player.position.y+=verticalSpeed*dt;if(player.position.y<=0){player.position.y=0;verticalSpeed=0;grounded=true}}
+ // natural walk cycle and a short photo pose
+ poseTimer=Math.max(0,poseTimer-dt);
+ if(poseTimer>0){
+   const poseMoves=[
+     [[-.15,-1.05],[-.15,.15]],
+     [[-.15,-1.35],[-.15,1.35]],
+     [[-.25,-1.35],[-.1,.18]],
+     [[-.9,-.95],[-.9,.95]],
+     [[-.1,-1.25],[-.2,.15]]
+   ][poseIndex];
+   arms.forEach((a,i)=>{a.rotation.x=poseMoves[i][0];a.rotation.z=poseMoves[i][1]});
+   legs.forEach(l=>l.rotation.x=0);
+   head.rotation.z=poseIndex===2?-.12:0;
+ }
+ else if(riding){
+   head.rotation.z=0;arms.forEach(a=>{a.rotation.x=-1.0;a.rotation.z=0});legs.forEach(l=>{l.rotation.x=-1.05;l.rotation.z=0});
+ } else {head.rotation.z=0;arms.forEach((a,i)=>{a.rotation.x=moving?Math.sin(walkClock+(i*Math.PI))*.55:0;a.rotation.z=(i===0?-.08:.08)});legs.forEach((l,i)=>{l.rotation.x=moving?Math.sin(walkClock+(i*Math.PI))*.62:0})}
+ player.position.x=THREE.MathUtils.clamp(player.position.x,-88,88);player.position.z=THREE.MathUtils.clamp(player.position.z,-88,88);
+ if(riding)rudolph.position.set(player.position.x,Math.abs(Math.sin(clock.elapsedTime*8))*.03,player.position.z);
+ rudolph.userData.legs?.forEach(({pivot,phase})=>{pivot.rotation.x=(riding&&moving?Math.sin(walkClock+phase)*.62:Math.sin(clock.elapsedTime*1.8+phase)*.035)});
+ // notify when the avatar reaches the photo spot
+ const atPhoto=Math.hypot(player.position.x-11,player.position.z-1.5)<4.2;
+ if(atPhoto&&!photoToastShown){toast.textContent='📸 크리스마스 포토존! 사진 포즈 버튼을 눌러보세요';toast.classList.add('show');photoToastShown=true;setTimeout(()=>toast.classList.remove('show'),2600)}
+ if(!atPhoto)photoToastShown=false;
+ const nearTree=Math.hypot(player.position.x,player.position.z)<4.8;
+ wishButton.disabled=!nearTree;
+ wishButton.textContent=nearTree?'💬 응원 메시지 남기기':'🎄 트리 가까이 가서 응원 남기기';
+ let target=new THREE.Vector3(player.position.x,1.55+player.position.y,player.position.z);
+ let distance=6.5, horiz=Math.cos(cameraPitch)*distance;
+ let zoom=poseTimer>0?4.8:6.5;horiz=Math.cos(cameraPitch)*zoom;let camPos=new THREE.Vector3(target.x+Math.sin(cameraYaw)*horiz,target.y+2.0+Math.sin(cameraPitch)*zoom,target.z+Math.cos(cameraYaw)*horiz);
+ camera.position.lerp(camPos,1-Math.pow(.001,dt));camera.lookAt(target);
+ let p=flakes.attributes.position;for(let i=0;i<count;i++){p.array[i*3+1]-=dt*(1.5+(i%5)*.25);p.array[i*3]+=.12*dt;if(p.array[i*3+1]<0){p.array[i*3+1]=25;p.array[i*3+2]=(Math.random()-.5)*170}}p.needsUpdate=true;
+ // Start a 14-second Santa fly-by every 60 seconds.
+ if(!santaActive&&clock.elapsedTime>=santaNextAt){santaActive=true;santaStart=clock.elapsedTime;santaLastDrop=-10;santaGroup.visible=true;toast.textContent='🎅 산타가 선물을 나눠주러 왔어요!';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2800);}
+ if(santaActive){
+   const elapsed=clock.elapsedTime-santaStart, progress=Math.min(elapsed/14,1);
+   santaGroup.position.set(-58+progress*116,17+Math.sin(elapsed*1.8)*.65,-16);
+   santaGroup.rotation.y=0;
+   if(elapsed-santaLastDrop>.72&&progress<.94){dropSantaGift(santaGroup.position.x+(Math.random()-.5)*2,-12+(Math.random()-.5)*12);santaLastDrop=elapsed;}
+   if(progress>=1){santaActive=false;santaGroup.visible=false;santaNextAt=santaStart+60;}
+ }
+ for(let i=fallingGifts.length-1;i>=0;i--){
+   const gift=fallingGifts[i];
+   if(!gift.landed){gift.vy-=12*dt;gift.group.position.y+=gift.vy*dt;gift.group.rotation.y+=dt*1.7;if(gift.group.position.y<=.38){gift.group.position.y=.38;gift.vy=0;gift.landed=true;}}
+   if(gift.landed&&Math.hypot(player.position.x-gift.group.position.x,player.position.z-gift.group.position.z)<1.65){
+     burstFireworks(gift.group.position.clone().add(new THREE.Vector3(0,1.2,0)));scene.remove(gift.group);fallingGifts.splice(i,1);
+     continue;
+   }
+   if(clock.elapsedTime-gift.bornAt>=60){scene.remove(gift.group);fallingGifts.splice(i,1);}
+ }
+ for(let i=fireworks.length-1;i>=0;i--){
+   const f=fireworks[i];f.life-=dt;f.mesh.position.addScaledVector(f.velocity,dt);f.velocity.y-=2.8*dt;
+   if(f.mesh.material){f.mesh.material.opacity=Math.max(0,f.life/1.15);f.mesh.material.transparent=true;}
+   if(f.life<=0){if(f.mesh.parent)f.mesh.parent.remove(f.mesh);fireworks.splice(i,1);}
+ }
+ if(playerNameTag.style.display!=='none'){
+   const labelPos=new THREE.Vector3(player.position.x,player.position.y+2.9,player.position.z).project(camera);
+   playerNameTag.style.left=((labelPos.x*.5+.5)*innerWidth)+'px';
+   playerNameTag.style.top=((-labelPos.y*.5+.5)*innerHeight)+'px';
+ }
+ renderer.render(scene,camera)}
+animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+document.getElementById('enter').onclick=()=>{
+  const chosenName=playerNameInput.value.trim().slice(0,16);
+  if(!chosenName){playerNameInput.focus();playerNameInput.setCustomValidity('플레이어 이름을 입력해 주세요.');playerNameInput.reportValidity();return;}
+  if(isBad(chosenName)){playerNameInput.setCustomValidity('부적절한 이름이에요. 다른 이름을 써 주세요.');playerNameInput.reportValidity();return;}
+  playerNameInput.setCustomValidity('');
+  playerNameTag.textContent=chosenName;playerNameTag.style.display='block';
+  document.getElementById('start').style.display='none';startCarol();
+};
+playerNameInput.addEventListener('input',()=>playerNameInput.setCustomValidity(''));
+</script>
+</body></html>
